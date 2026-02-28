@@ -5,11 +5,11 @@ INERB - Drunk/Sober Detection System
 __version__ = "1.0.0"
 __author__ = "INERB Team"
 
-# Import without relative paths to avoid issues
-import features
-import model
-import dataset
-import utils
+# Use dot notation for relative imports
+from . import features
+from . import model
+from . import dataset
+from . import utils
 
 # Export main functions
 extract_features = features.extract_features
