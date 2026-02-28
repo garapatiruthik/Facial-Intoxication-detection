@@ -211,9 +211,27 @@ def train_model(
                 X.append(features)
                 y.append(1)
     
+    # Also check for png files
+    for path in glob.glob(os.path.join(drunk_dir, "*.png")):
+        img = cv2.imread(path)
+        if img is not None:
+            features = extract_features(img)
+            if features is not None:
+                X.append(features)
+                y.append(1)
+    
     # Load sober images (label = 0)
     sober_dir = os.path.join(data_dir, "sober")
     for path in glob.glob(os.path.join(sober_dir, "*.jpg")):
+        img = cv2.imread(path)
+        if img is not None:
+            features = extract_features(img)
+            if features is not None:
+                X.append(features)
+                y.append(0)
+    
+    # Also check for png files
+    for path in glob.glob(os.path.join(sober_dir, "*.png")):
         img = cv2.imread(path)
         if img is not None:
             features = extract_features(img)

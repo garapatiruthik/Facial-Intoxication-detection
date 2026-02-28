@@ -1,273 +1,103 @@
 """
 Utility functions for INERB drunk/sober detection.
-
-This module provides utility functions for image loading, face detection
-validation, and result formatting.
 """
 
 import os
 import cv2
 import numpy as np
-from typing import Optional, Tuple, Dict, Any, List
+from typing import Optional, Tuple, Dict
 
 
-def load_image(path: str) -> Optional[np.ndarray]:
+def load_image(image_source: any) -> Optional[np.ndarray]:
     """
-    Load an image from a file path.
+    Load an image from file path, bytes, or PIL Image.
     
     Args:
-        path: Path to the image file.
+        image_source: Either a file path (str), bytes, or PIL Image.
         
     Returns:
-        Image as numpy array in BGR format, or None if loading failed.
-    """
-    if not os.path.exists(path):
-        return None
-    
-    img = cv2.imread(path)
-    return img
-
-
-def load_image_from_bytes(bytes_data: bytes) -> Optional[np.ndarray]:
-    """
-    Load an image from byte data.
-    
-    Args:
-        bytes_data: Image data as bytes.
-        
-    Returns:
-        Image as numpy array in BGR format, or None if loading failed.
+        Image as numpy array in BGR format, or None if failed.
     """
     try:
-        nparr = np.frombuffer(bytes_data, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        return img
-    except Exception:
+        if isinstance(image_source, str):
+            # File path
+            img = cv2.imread(image_source)
+            return img
+        elif isinstance(image_source, bytes):
+            # Bytes
+            nparr = np.frombuffer(image_source, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            return img
+        else:
+            return None
+    except Exception as e:
+        print(f"Error loading image: {e}")
         return None
 
 
-def validate_image_file(path: str) -> Tuple[bool, str]:
+def validate_image(img: np.ndarray) -> Tuple[bool, str]:
     """
-    Validate that a file is a valid image.
+    Validate that the image is suitable for processing.
     
     Args:
-        path: Path to the image file.
-        
-    Returns:
-        Tuple of (is_valid, error_message).
-    """
-    # Check file exists
-    if not os.path.exists(path):
-        return False, f"File not found: {path}"
-    
-    # Check file extension
-    valid_extensions = [".jpg", ".jpeg", ".png", ".bmp"]
-    ext = os.path.splitext(path)[1].lower()
-    if ext not in valid_extensions:
-        return False, f"Invalid file extension: {ext}. Supported: {valid_extensions}"
-    
-    # Try to load the image
-    img = cv2.imread(path)
-    if img is None:
-        return False, "Could not read image file"
-    
-    # Check image dimensions
-    if img.shape[0] < 50 or img.shape[1] < 50:
-        return False, "Image too small (minimum 50x50 pixels)"
-    
-    return True, ""
-
-
-def validate_face_detection(img: np.ndarray, min_size: int = 100) -> Tuple[bool, str]:
-    """
-    Validate that an image contains a detectable face of sufficient size.
-    
-    Args:
-        img: Input image.
-        min_size: Minimum face size in pixels.
+        img: Input image as numpy array.
         
     Returns:
         Tuple of (is_valid, error_message).
     """
     if img is None:
-        return False, "No image provided"
+        return False, "Image is None"
     
-    height, width = img.shape[:2]
+    if len(img.shape) != 3:
+        return False, "Image must be a color image (3 channels)"
     
-    if height < min_size or width < min_size:
-        return False, f"Image too small: {width}x{height} (minimum {min_size}x{min_size})"
+    if img.shape[2] != 3:
+        return False, "Image must have 3 color channels"
+    
+    h, w = img.shape[:2]
+    if h < 100 or w < 100:
+        return False, "Image too small. Minimum size is 100x100 pixels"
     
     return True, ""
 
 
-def resize_image(
-    img: np.ndarray,
-    max_width: int = 1920,
-    max_height: int = 1080
-) -> np.ndarray:
+def format_prediction_result(prediction: str, confidence: float, probabilities: dict) -> dict:
     """
-    Resize an image while maintaining aspect ratio.
+    Format prediction result for display.
     
     Args:
-        img: Input image.
-        max_width: Maximum width.
-        max_height: Maximum height.
-        
-    Returns:
-        Resized image.
-    """
-    height, width = img.shape[:2]
-    
-    # Check if resize needed
-    if width <= max_width and height <= max_height:
-        return img
-    
-    # Calculate scaling factor
-    scale = min(max_width / width, max_height / height)
-    new_width = int(width * scale)
-    new_height = int(height * scale)
-    
-    return cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
-
-
-def format_prediction_result(
-    prediction: str,
-    confidence: float,
-    probabilities: Dict[str, float]
-) -> Dict[str, Any]:
-    """
-    Format a prediction result for display.
-    
-    Args:
-        prediction: Prediction string ("drunk" or "sober").
-        confidence: Confidence score (0-1).
-        probabilities: Dictionary with probabilities for each class.
+        prediction: "drunk" or "sober"
+        confidence: Confidence score (0-1)
+        probabilities: Dictionary with "drunk" and "sober" probabilities
         
     Returns:
         Formatted result dictionary.
     """
-    # Determine color based on prediction
-    if prediction == "drunk":
-        color = "#e74c3c"  # Red
-        emoji = "🍺"
-    else:
-        color = "#2ecc71"  # Green
-        emoji = "💚"
-    
-    # Format percentage strings
-    confidence_pct = f"{confidence * 100:.1f}%"
-    sober_pct = f"{probabilities.get('sober', 0) * 100:.1f}%"
-    drunk_pct = f"{probabilities.get('drunk', 0) * 100:.1f}%"
-    
     return {
         "prediction": prediction,
-        "prediction_display": f"{emoji} {prediction.upper()}",
         "confidence": confidence,
-        "confidence_display": confidence_pct,
-        "probabilities": {
-            "sober": probabilities.get("sober", 0),
-            "drunk": probabilities.get("drunk", 0),
-        },
-        "probabilities_display": {
-            "sober": sober_pct,
-            "drunk": drunk_pct,
-        },
-        "color": color,
+        "probabilities": probabilities,
+        "label": "Drunk" if prediction == "drunk" else "Sober",
+        "color": "#e74c3c" if prediction == "drunk" else "#2ecc71",
+        "emoji": "🍺" if prediction == "drunk" else "💚"
     }
 
 
-def get_feature_importance_display(
-    feature_importances: Dict[str, float]
-) -> List[Dict[str, Any]]:
+def get_model_path() -> str:
     """
-    Format feature importances for display.
+    Get the path to the trained model.
+    
+    Returns:
+        Path to model file.
+    """
+    return "models/detection_model.pkl"
+
+
+def ensure_directory(path: str) -> None:
+    """
+    Ensure a directory exists, create if it doesn't.
     
     Args:
-        feature_importances: Dictionary mapping feature names to importance values.
-        
-    Returns:
-        List of dictionaries with feature name, importance, and formatted percentage.
+        path: Directory path to ensure exists.
     """
-    # Sort by importance
-    sorted_features = sorted(
-        feature_importances.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
-    
-    return [
-        {
-            "name": name,
-            "importance": importance,
-            "percentage": f"{importance * 100:.1f}%",
-        }
-        for name, importance in sorted_features
-    ]
-
-
-def create_result_summary(
-    results: List[Dict[str, Any]]
-) -> Dict[str, Any]:
-    """
-    Create a summary of multiple prediction results.
-    
-    Args:
-        results: List of prediction result dictionaries.
-        
-    Returns:
-        Summary dictionary.
-    """
-    if not results:
-        return {
-            "count": 0,
-            "drunk_count": 0,
-            "sober_count": 0,
-            "average_confidence": 0,
-        }
-    
-    drunk_count = sum(1 for r in results if r.get("prediction") == "drunk")
-    sober_count = sum(1 for r in results if r.get("prediction") == "sober")
-    avg_confidence = sum(r.get("confidence", 0) for r in results) / len(results)
-    
-    return {
-        "count": len(results),
-        "drunk_count": drunk_count,
-        "sober_count": sober_count,
-        "average_confidence": avg_confidence,
-        "average_confidence_display": f"{avg_confidence * 100:.1f}%",
-    }
-
-
-def check_model_exists(model_path: str = "models/detection_model.pkl") -> bool:
-    """
-    Check if the trained model file exists.
-    
-    Args:
-        model_path: Path to the model file.
-        
-    Returns:
-        True if model exists, False otherwise.
-    """
-    return os.path.exists(model_path)
-
-
-def get_dataset_paths(
-    base_dir: str = "."
-) -> Dict[str, str]:
-    """
-    Get paths to dataset directories.
-    
-    Args:
-        base_dir: Base directory for the project.
-        
-    Returns:
-        Dictionary with paths.
-    """
-    return {
-        "data_dir": os.path.join(base_dir, "data"),
-        "drunk_dir": os.path.join(base_dir, "data", "drunk"),
-        "sober_dir": os.path.join(base_dir, "data", "sober"),
-        "models_dir": os.path.join(base_dir, "models"),
-        "model_path": os.path.join(base_dir, "models", "detection_model.pkl"),
-        "config_path": os.path.join(base_dir, "config", "config.yaml"),
-    }
+    os.makedirs(path, exist_ok=True)

@@ -24,6 +24,7 @@ INERB (INERB is Not Evidence-based Research) uses computer vision and machine le
 ```
 inerb/
 ├── README.md                 # This file
+├── LICENSE                   # MIT License
 ├── requirements.txt         # Python dependencies
 ├── setup.py                 # Package installation
 ├── .gitignore               # Git ignore patterns
@@ -62,13 +63,45 @@ inerb/
 
 ```bash
 # Clone or download the project
-cd inerb
+git clone https://github.com/yourusername/Facial-Intoxication-detection.git
+cd Facial-Intoxication-detection
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Or install the package in development mode
 pip install -e .
+```
+
+## Deployment
+
+### Deploy to Streamlit Cloud (Recommended)
+
+Streamlit Cloud is free for public repositories and is the easiest way to deploy your app.
+
+1. **Push your code to GitHub**
+   ```bash
+   git add .
+   git commit -m "Initial commit"
+   git push origin main
+   ```
+
+2. **Deploy on Streamlit Cloud**
+   - Go to [share.streamlit.io](https://share.streamlit.io)
+   - Sign in with your GitHub account
+   - Click "New app"
+   - Select your repository: `yourusername/Facial-Intoxication-detection`
+   - Branch: `main`
+   - Main file path: `app/streamlit_app.py`
+   - Click "Deploy"
+
+3. **Your app will be live at**: `https://your-app-name.streamlit.app`
+
+### Local Deployment
+
+```bash
+# Run locally
+streamlit run app/streamlit_app.py
 ```
 
 ## Usage
@@ -162,7 +195,9 @@ pytest tests/
 
 ## License
 
-MIT License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Disclaimer
 
 ## Disclaimer
 
