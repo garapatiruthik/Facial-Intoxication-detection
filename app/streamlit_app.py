@@ -3,16 +3,19 @@ INEB - Drunk/Sober Detection Web Application
 """
 
 import sys
-import os
+from pathlib import Path
 
-# Add src directory to Python path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Find the 'src' folder relative to this app file
+src_path = str(Path(__file__).parent.parent / "src")
+if src_path not in sys.path:
+    sys.path.append(src_path)
 
 import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
 
+# Now import the inerb module
 from inerb import features, model, utils
 
 MODEL_PATH = "models/detection_model.pkl"
