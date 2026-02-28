@@ -1,0 +1,47 @@
+# INERB Configuration File
+
+# Model settings
+model:
+  name: "RandomForestClassifier"
+  n_estimators: 100
+  random_state: 42
+  model_path: "models/detection_model.pkl"
+
+# Feature extraction settings
+features:
+  feature_names:
+    - "eye_aspect_ratio"
+    - "cheek_redness"
+    - "mouth_opening"
+    - "eye_circularity"
+    - "lip_line_curvature"
+  
+  mediapipe:
+    static_image_mode: true
+    max_num_faces: 1
+
+# Dataset settings
+dataset:
+  data_dir: "data"
+  drunk_dir: "data/drunk"
+  sober_dir: "data/sober"
+  train_test_split: 0.2
+  supported_formats:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+
+# Application settings
+app:
+  title: "INERB - Drunk/Sober Detection"
+  page_icon: ":wine_glass:"
+  layout: "wide"
+  upload_button_text: "Upload Face Images"
+  max_file_size_mb: 10
+
+# Results settings
+results:
+  confidence_threshold: 0.5
+  show_probabilities: true
+  sober_color: "#2ecc71"
+  drunk_color: "#e74c3c"
