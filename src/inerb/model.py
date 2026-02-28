@@ -15,6 +15,10 @@ from . import features
 
 DEFAULT_MODEL_PATH = "models/detection_model.pkl"
 
+def get_project_root():
+    """Get the project root directory."""
+    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 def load_image_as_array(path: str) -> Optional[np.ndarray]:
     try:
         img = cv2.imread(path)
@@ -23,7 +27,6 @@ def load_image_as_array(path: str) -> Optional[np.ndarray]:
         return None
 
 def save_model(model_obj, path: str) -> None:
-    """Save a model object to a path."""
     os.makedirs(os.path.dirname(path), exist_ok=True)
     joblib.dump(model_obj, path)
 
@@ -67,38 +70,53 @@ class DetectionModel:
         self.model = joblib.load(path)
 
 def train_model(data_dir: str = "data", model_path: str = DEFAULT_MODEL_PATH, n_estimators: int = 100) -> Dict[str, Any]:
+    project_root = get_project_root()
+    data_path = os.path.join(project_root, data_dir)
+    model_save_path = os.path.join(project_root, model_path)
+    
+    print(f"Project root: {project_root}")
+    print(f"Data path: {data_path}")
+    
     X, y = [], []
+    
     for label, label_val in [("drunk", 1), ("sober", 0)]:
-        for ext in ["jpg", "png"]:
-            for path in glob.glob(os.path.join(data_dir, label, f"*.{ext}")):
+        label_dir = os.path.join(data_path, label)
+        print(f"Looking in: {label_dir}")
+        
+        if not os.path.exists(label_dir):
+            print(f"Dir not found: {label_dir}")
+            continue
+        
+        for ext in ["jpg", "jpeg", "png"]:
+            for path in glob.glob(os.path.join(label_dir, f"*.{ext}")):
                 img = load_image_as_array(path)
                 if img is not None:
                     f = features.extract_features(img)
-                    if f: X.append(f); y.append(label_val)
-    if len(X) < 2: raise ValueError("Not enough data!")
+                    if f is not None:
+                        X.append(f)
+                        y.append(label_val)
+    
+    print(f"Loaded {len(X)} images")
+    
+    if len(X) < 2:
+        raise ValueError(f"Not enough data! Found {len(X)} images.")
+    
     X, y = np.array(X), np.array(y)
     m = DetectionModel()
     r = m.train(X, y, n_estimators)
-    m.save(model_path)
-    r["model_path"] = model_path
+    m.save(model_save_path)
+    r["model_path"] = model_save_path
     return r
 
-def predict(image_path: str, model_path: str = DEFAULT_MODEL_PATH) -> Dict[str, Any]:
-    img = load_image_as_array(image_path)
-    if img is None: raise FileNotFoundError("Image not found")
-    f = features.extract_features(img)
-    if f is None: raise ValueError("No face detected")
-    m = DetectionModel()
-    m.load(model_path)
-    return m.predict_with_details(f)
-
 def load_model(path: str = DEFAULT_MODEL_PATH) -> DetectionModel:
+    project_root = get_project_root()
+    full_path = os.path.join(project_root, path)
     m = DetectionModel()
-    m.load(path)
+    m.load(full_path)
     return m
 
 if __name__ == "__main__":
-    import sys, argparse
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-dir", default="data")
     parser.add_argument("--model-path", default=DEFAULT_MODEL_PATH)
