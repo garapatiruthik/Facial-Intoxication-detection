@@ -80,7 +80,8 @@ def main():
         if st.button("Train Model"):
             try:
                 with st.spinner("Training..."):
-                    result = model.train_model(data_dir="data", model_path=MODEL_PATH)
+                    # Use ../data to go up from app/ to root
+                    result = model.train_model(data_dir="../data", model_path=MODEL_PATH)
                 st.success(f"Done! Accuracy: {result['accuracy']*100:.1f}%")
                 st.rerun()
             except Exception as e:
