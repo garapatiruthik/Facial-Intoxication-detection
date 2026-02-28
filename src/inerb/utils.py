@@ -8,23 +8,13 @@ import numpy as np
 from typing import Optional, Tuple, Dict
 
 
-def load_image(image_source: any) -> Optional[np.ndarray]:
-    """
-    Load an image from file path, bytes, or PIL Image.
-    
-    Args:
-        image_source: Either a file path (str), bytes, or PIL Image.
-        
-    Returns:
-        Image as numpy array in BGR format, or None if failed.
-    """
+def load_image(image_source) -> Optional[np.ndarray]:
+    """Load an image from file path, bytes, or PIL Image."""
     try:
         if isinstance(image_source, str):
-            # File path
             img = cv2.imread(image_source)
             return img
         elif isinstance(image_source, bytes):
-            # Bytes
             nparr = np.frombuffer(image_source, np.uint8)
             img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             return img
@@ -36,15 +26,7 @@ def load_image(image_source: any) -> Optional[np.ndarray]:
 
 
 def validate_image(img: np.ndarray) -> Tuple[bool, str]:
-    """
-    Validate that the image is suitable for processing.
-    
-    Args:
-        img: Input image as numpy array.
-        
-    Returns:
-        Tuple of (is_valid, error_message).
-    """
+    """Validate that the image is suitable for processing."""
     if img is None:
         return False, "Image is None"
     
@@ -62,17 +44,7 @@ def validate_image(img: np.ndarray) -> Tuple[bool, str]:
 
 
 def format_prediction_result(prediction: str, confidence: float, probabilities: dict) -> dict:
-    """
-    Format prediction result for display.
-    
-    Args:
-        prediction: "drunk" or "sober"
-        confidence: Confidence score (0-1)
-        probabilities: Dictionary with "drunk" and "sober" probabilities
-        
-    Returns:
-        Formatted result dictionary.
-    """
+    """Format prediction result for display."""
     return {
         "prediction": prediction,
         "confidence": confidence,
@@ -84,20 +56,10 @@ def format_prediction_result(prediction: str, confidence: float, probabilities: 
 
 
 def get_model_path() -> str:
-    """
-    Get the path to the trained model.
-    
-    Returns:
-        Path to model file.
-    """
+    """Get the path to the trained model."""
     return "models/detection_model.pkl"
 
 
 def ensure_directory(path: str) -> None:
-    """
-    Ensure a directory exists, create if it doesn't.
-    
-    Args:
-        path: Directory path to ensure exists.
-    """
+    """Ensure a directory exists, create if it doesn't."""
     os.makedirs(path, exist_ok=True)
