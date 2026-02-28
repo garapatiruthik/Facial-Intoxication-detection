@@ -11,7 +11,7 @@ from typing import Tuple, List, Optional, Dict, Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from .features import extract_features
+from . import features
 
 DEFAULT_MODEL_PATH = "models/detection_model.pkl"
 
@@ -21,6 +21,11 @@ def load_image_as_array(path: str) -> Optional[np.ndarray]:
         return img
     except Exception:
         return None
+
+def save_model(model_obj, path: str) -> None:
+    """Save a model object to a path."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    joblib.dump(model_obj, path)
 
 class DetectionModel:
     def __init__(self, model: Optional[RandomForestClassifier] = None):
@@ -68,7 +73,7 @@ def train_model(data_dir: str = "data", model_path: str = DEFAULT_MODEL_PATH, n_
             for path in glob.glob(os.path.join(data_dir, label, f"*.{ext}")):
                 img = load_image_as_array(path)
                 if img is not None:
-                    f = extract_features(img)
+                    f = features.extract_features(img)
                     if f: X.append(f); y.append(label_val)
     if len(X) < 2: raise ValueError("Not enough data!")
     X, y = np.array(X), np.array(y)
@@ -81,7 +86,7 @@ def train_model(data_dir: str = "data", model_path: str = DEFAULT_MODEL_PATH, n_
 def predict(image_path: str, model_path: str = DEFAULT_MODEL_PATH) -> Dict[str, Any]:
     img = load_image_as_array(image_path)
     if img is None: raise FileNotFoundError("Image not found")
-    f = extract_features(img)
+    f = features.extract_features(img)
     if f is None: raise ValueError("No face detected")
     m = DetectionModel()
     m.load(model_path)
