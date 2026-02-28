@@ -11,12 +11,11 @@ from typing import Tuple, List, Optional, Dict, Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-from . import features
+import features
 
 DEFAULT_MODEL_PATH = "models/detection_model.pkl"
 
 def get_project_root():
-    """Get the project root directory."""
     return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def load_image_as_array(path: str) -> Optional[np.ndarray]:
@@ -45,18 +44,18 @@ class DetectionModel:
         accuracy = accuracy_score(y_test, self.model.predict(X_test))
         return {"accuracy": accuracy, "n_samples": len(X), "feature_importances": dict(zip(self.feature_names, self.model.feature_importances_))}
     
-    def predict(self, features: List[float]) -> Tuple[int, float]:
+    def predict(self, feat: List[float]) -> Tuple[int, float]:
         if self.model is None:
             raise ValueError("Model not loaded")
-        arr = np.array(features).reshape(1, -1)
+        arr = np.array(feat).reshape(1, -1)
         pred = self.model.predict(arr)[0]
         probs = self.model.predict_proba(arr)[0]
         return int(pred), float(max(probs))
     
-    def predict_with_details(self, features: List[float]) -> Dict[str, Any]:
+    def predict_with_details(self, feat: List[float]) -> Dict[str, Any]:
         if self.model is None:
             raise ValueError("Model not loaded")
-        arr = np.array(features).reshape(1, -1)
+        arr = np.array(feat).reshape(1, -1)
         pred = self.model.predict(arr)[0]
         probs = self.model.predict_proba(arr)[0]
         return {"prediction": "drunk" if pred == 1 else "sober", "confidence": float(max(probs)), "probabilities": {"sober": float(probs[0]), "drunk": float(probs[1])}}
