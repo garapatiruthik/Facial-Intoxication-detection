@@ -39,15 +39,13 @@ env/
 .env
 .env.local
 
-# Data directories
-data/drunk/*
-data/sober/*
-!data/drunk/.gitkeep
-!data/sober/.gitkeep
+# Data directories - allow images but keep folder structure
+# data/drunk/*  # Commented out to allow images
+# data/sober/*  # Commented out to allow images
 
-# Models
-models/*.pkl
-models/*.joblib
+# Models - allow trained model to be stored
+# models/*.pkl   # Commented out to allow trained model
+# models/*.joblib # Commented out to allow trained model
 
 # Jupyter
 .ipynb_checkpoints
