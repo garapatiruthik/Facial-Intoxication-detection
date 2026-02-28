@@ -11,7 +11,7 @@ from typing import Tuple, List, Optional, Dict, Any
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
-import features
+from . import features
 
 DEFAULT_MODEL_PATH = "models/detection_model.pkl"
 
@@ -24,10 +24,6 @@ def load_image_as_array(path: str) -> Optional[np.ndarray]:
         return img
     except Exception:
         return None
-
-def save_model(model_obj, path: str) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    joblib.dump(model_obj, path)
 
 class DetectionModel:
     def __init__(self, model: Optional[RandomForestClassifier] = None):
@@ -43,14 +39,6 @@ class DetectionModel:
         self.model.fit(X_train, y_train)
         accuracy = accuracy_score(y_test, self.model.predict(X_test))
         return {"accuracy": accuracy, "n_samples": len(X), "feature_importances": dict(zip(self.feature_names, self.model.feature_importances_))}
-    
-    def predict(self, feat: List[float]) -> Tuple[int, float]:
-        if self.model is None:
-            raise ValueError("Model not loaded")
-        arr = np.array(feat).reshape(1, -1)
-        pred = self.model.predict(arr)[0]
-        probs = self.model.predict_proba(arr)[0]
-        return int(pred), float(max(probs))
     
     def predict_with_details(self, feat: List[float]) -> Dict[str, Any]:
         if self.model is None:
@@ -73,17 +61,11 @@ def train_model(data_dir: str = "data", model_path: str = DEFAULT_MODEL_PATH, n_
     data_path = os.path.join(project_root, data_dir)
     model_save_path = os.path.join(project_root, model_path)
     
-    print(f"Project root: {project_root}")
-    print(f"Data path: {data_path}")
-    
     X, y = [], []
     
     for label, label_val in [("drunk", 1), ("sober", 0)]:
         label_dir = os.path.join(data_path, label)
-        print(f"Looking in: {label_dir}")
-        
         if not os.path.exists(label_dir):
-            print(f"Dir not found: {label_dir}")
             continue
         
         for ext in ["jpg", "jpeg", "png"]:
@@ -94,8 +76,6 @@ def train_model(data_dir: str = "data", model_path: str = DEFAULT_MODEL_PATH, n_
                     if f is not None:
                         X.append(f)
                         y.append(label_val)
-    
-    print(f"Loaded {len(X)} images")
     
     if len(X) < 2:
         raise ValueError(f"Not enough data! Found {len(X)} images.")
